@@ -1,3 +1,6 @@
+using CefSharp;
+using CefSharp.WinForms;
+
 namespace allaiwinforms
 {
     internal static class Program
@@ -11,6 +14,7 @@ namespace allaiwinforms
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+            Cef.Initialize(new CefSettings());
             Application.Run(new Form1());
         }
     }

@@ -8,4 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="CefSharp.WinForms.NETCore" Version="123.0.60" />
+  </ItemGroup>
+
 </Project>
