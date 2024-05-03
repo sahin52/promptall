@@ -105,11 +105,18 @@ namespace allaiwinforms
                     /**
                     function getElementByXPath(path) {
   return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-}                   gemini:
+}                   // gemini:
                      getElementByXPath('//*[@id="app-root"]/main/side-navigation-v2/mat-sidenav-container/mat-sidenav-content/div/div[2]/chat-window/div[1]/div[2]/div[1]/input-area-v2/div/div/div[1]/div/div/rich-textarea/div[1]').focus()
                      */
                     browserAndDetail.Browser.Focus();
-                    await browserAndDetail.Submit(inputText);
+                    try
+                    {
+                        await browserAndDetail.Submit(inputText);
+                    }catch(Exception ex)
+                    {
+                        Console.WriteLine("Exception: "+ex.Message +ex.StackTrace);
+                    }
+                    
                 }
             };
             this.Text = "Form1";
@@ -137,11 +144,9 @@ namespace allaiwinforms
         public override async Task Submit(string inputText)
         {
             // Escape the input text for use in a JavaScript string
-            string escapedInputText = System.Security.SecurityElement.Escape(inputText);
 
             string enterInputScript = $@"
                             var input = document.evaluate('{InputXpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                            var event = new KeyboardEvent('keydown', {{key: '{escapedInputText}'}});
                             input.focus();
                             // input.dispatchEvent(event);
                         ";
@@ -214,6 +219,8 @@ namespace allaiwinforms
             // Escape the input text for use in a JavaScript string
             string escapedInputText = System.Security.SecurityElement.Escape(inputText);
 
+
+
         }
     }
     internal class ClaudeBrowserAndDetails : BrowserAndDetails
@@ -224,8 +231,24 @@ namespace allaiwinforms
         }
         public override async Task Submit(string inputText)
         {
-            // Escape the input text for use in a JavaScript string
-            string escapedInputText = System.Security.SecurityElement.Escape(inputText);
+            var focusScript = @"document.querySelector('[contenteditable=""true""]').focus()";
+            await Browser.EvaluateScriptAsync(focusScript);
+
+            foreach (char c in inputText)
+            {
+                var keyEvent = new KeyEvent
+                {
+                    WindowsKeyCode = (int)c,
+                    Type = KeyEventType.Char,
+                    IsSystemKey = false
+                };
+
+                Browser.GetBrowser().GetHost().SendKeyEvent(keyEvent);
+            }
+
+            var clickOnSubmitScript = @"document.querySelector('[aria-label=""Send Message""]').click()";
+
+            await Browser.EvaluateScriptAsync(clickOnSubmitScript);
 
         }
     }
@@ -239,7 +262,31 @@ namespace allaiwinforms
         {
             // Escape the input text for use in a JavaScript string
             string escapedInputText = System.Security.SecurityElement.Escape(inputText);
+            string selectTextAreaScript = @"
+                function getElementByXPath(path) {
+                    return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                }
+                getElementByXPath('//*[@id=""b_sydConvCont""]/cib-serp').shadowRoot.querySelector('#cib-action-bar-main').shadowRoot.querySelector('cib-text-input').shadowRoot.querySelector('#searchbox').click() ";
+            await Browser.EvaluateScriptAsync(selectTextAreaScript);
+            foreach (char c in inputText)
+            {
+                var keyEvent = new KeyEvent
+                {
+                    WindowsKeyCode = (int)c,
+                    Type = KeyEventType.Char,
+                    IsSystemKey = false
+                };
 
+                Browser.GetBrowser().GetHost().SendKeyEvent(keyEvent);
+            }
+
+            // Submit
+            var clickOnSubmitScript = @"
+                    getElementByXPath('//*[@id=""b_sydConvCont""]/cib-serp').shadowRoot
+                        .querySelector('#cib-action-bar-main').shadowRoot
+                        .querySelector('button[description=""Submit""]').click()
+                ";
+            await Browser.EvaluateScriptAsync(clickOnSubmitScript);
         }
 
     }
