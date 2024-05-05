@@ -33,6 +33,7 @@ namespace allaiwinforms
             new BingChatBrowserAndDetails(),
             new ClaudeBrowserAndDetails(),
         };
+        private TextBox inputLine;
 
         private ChromiumWebBrowser CreateBrowser(string url)
         {
@@ -85,7 +86,7 @@ namespace allaiwinforms
             secondRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[3]));
 
 
-            var inputLine = new TextBox
+            inputLine = new TextBox
             {
                 Dock = DockStyle.Top
             };
@@ -95,7 +96,21 @@ namespace allaiwinforms
             var submitButton = new Button { Text = "Submit", Dock = DockStyle.Top };
             this.Controls.Add(submitButton);
             // Handle the Click event of the submit button
-            submitButton.Click += async (sender, e) =>
+            submitButton.Click += OnSubmit;
+            inputLine.KeyDown += (sender, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    // Handle Enter key press here
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    OnSubmit(null, null);
+                }
+            };
+            this.Text = "Form1";
+        }
+        private async void OnSubmit(object sender, EventArgs e)
+        {
             {
                 // Get the input line's text
                 string inputText = inputLine.Text;
@@ -112,14 +127,15 @@ namespace allaiwinforms
                     try
                     {
                         await browserAndDetail.Submit(inputText);
-                    }catch(Exception ex)
-                    {
-                        Console.WriteLine("Exception: "+ex.Message +ex.StackTrace);
                     }
-                    
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message + ex.StackTrace);
+                    }
                 }
+                Properties.Settings.Default.PromptHistory.Add(inputText);
+                inputLine.Clear();
             };
-            this.Text = "Form1";
         }
 
         #endregion
@@ -162,12 +178,6 @@ namespace allaiwinforms
 
                 Browser.GetBrowser().GetHost().SendKeyEvent(keyEvent);
             }
-            string getHtmlScript = @"
-                        document.documentElement.outerHTML;
-                    ";
-            JavascriptResponse res = await Browser.EvaluateScriptAsync(getHtmlScript);
-            string html = res.Result.ToString();
-            Console.WriteLine(html);
             string getButtonCoordinatesScript = $@"
                         var button1 = document.getElementsByClassName(""absolute bottom-1.5 right-2 rounded-lg border border-black bg-black p-0.5 text-white transition-colors"")[0]
                         button1.click()
@@ -200,7 +210,7 @@ namespace allaiwinforms
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine("Exception on ChatGpt click on submit:" + ex.Message + ex.StackTrace);
             }
 
         }
