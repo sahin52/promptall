@@ -1,7 +1,7 @@
 ﻿using CefSharp;
 using CefSharp.WinForms;
 using System.Diagnostics;
-
+using System.Runtime.InteropServices;
 namespace allaiwinforms
 {
     partial class Form1
@@ -34,7 +34,17 @@ namespace allaiwinforms
             new ClaudeBrowserAndDetails(),
         };
         private TextBox inputLine;
+        private IntPtr vscodeHandle;
+        private SplitContainer firstRowSplitContainer;
+        private SplitContainer secondRowSplitContainer;
 
+        [DllImport("user32.dll")]
+        public static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
         private ChromiumWebBrowser CreateBrowser(string url)
         {
             var browser = new ChromiumWebBrowser(url)
@@ -65,14 +75,14 @@ namespace allaiwinforms
             this.Controls.Add(rowSplitContainer);
 
             // Create a SplitContainer for the first row's columns
-            var firstRowSplitContainer = new SplitContainer
+            firstRowSplitContainer = new SplitContainer
             {
                 Dock = DockStyle.Fill
             };
             rowSplitContainer.Panel1.Controls.Add(firstRowSplitContainer);
 
             // Create a SplitContainer for the second row's columns
-            var secondRowSplitContainer = new SplitContainer
+            secondRowSplitContainer = new SplitContainer
             {
                 Dock = DockStyle.Fill
             };
@@ -80,7 +90,7 @@ namespace allaiwinforms
 
             // Create 4 ChromiumWebBrowser instances and add them to the SplitContainers
             var urls = browserAndDetails.Select(x => x.Url).ToList();
-            firstRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[0]));
+            // firstRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[0]));
             firstRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[1]));
             secondRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[2]));
             secondRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[3]));
@@ -108,6 +118,7 @@ namespace allaiwinforms
                 }
             };
             this.Text = "Form1";
+            StartVsCode();
         }
         private async void OnSubmit(object sender, EventArgs e)
         {
@@ -130,7 +141,7 @@ namespace allaiwinforms
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Exception: " + ex.Message + ex.StackTrace);
+                        Debug.WriteLine("Exception: " + ex.Message + ex.StackTrace);
                     }
                 }
                 Properties.Settings.Default.PromptHistory.Add(inputText);
@@ -139,7 +150,83 @@ namespace allaiwinforms
         }
 
         #endregion
+
+        public async Task StartVsCode()
+        {
+            Dictionary<IntPtr, string> windowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames().ToDictionary(entry => entry.Key, entry => (string)entry.Value.Clone());
+            await Task.Delay(1000);
+            Process.Start(@"C:\Users\Sahin\AppData\Local\Programs\Microsoft VS Code\Code.exe");
+
+            // Add a delay to give Visual Studio Code time to start up
+            await Task.Delay(5000);
+            Dictionary<IntPtr, string> newWindowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames();
+            IntPtr codeWindowHandle = newWindowHandlesWithNames
+                .Where(kvp => kvp.Value == "Code" && !windowHandlesWithNames.ContainsKey(kvp.Key))
+                .Select(kvp => kvp.Key)
+                .FirstOrDefault();
+
+            // Embed Visual Studio Code into the first panel of the first row
+            SetParent(codeWindowHandle, firstRowSplitContainer.Panel1.Handle);
+            MoveWindow(codeWindowHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
+
+        }
+        public void SendKeysToVSCode(string keys)
+        {
+            // Activate the Visual Studio Code window
+            SetForegroundWindow(vscodeHandle);
+
+            // Send keys
+            SendKeys.SendWait(keys);
+        }
     }
+
+    public class WindowHandleGetter
+    {
+        // Import the required Win32 functions
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(EnumWindowsProc enumFunc, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        private static extern int GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr hWnd);
+
+        // Define the callback delegate for EnumWindows
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        // Dictionary to store the window handles and process names
+        private static Dictionary<IntPtr, string> windowHandlesWithProcessNames = new Dictionary<IntPtr, string>();
+
+        // Callback function for EnumWindows
+        private static bool EnumWindowsCallback(IntPtr hWnd, IntPtr lParam)
+        {
+            uint processId;
+            GetWindowThreadProcessId(hWnd, out processId);
+
+            // Get the process name
+            Process process = Process.GetProcessById((int)processId);
+            string processName = process.ProcessName;
+
+            // Check if the window associated with the process is visible
+            if (IsWindowVisible(hWnd))
+            {
+                // Add the window handle and process name to the dictionary
+                windowHandlesWithProcessNames[hWnd] = processName;
+            }
+
+            // Continue enumerating
+            return true;
+        }
+
+        public static Dictionary<IntPtr, string> GetWindowHandlesWithProcessNames()
+        {
+            windowHandlesWithProcessNames.Clear();
+            EnumWindows(EnumWindowsCallback, IntPtr.Zero);
+            return windowHandlesWithProcessNames;
+        }
+    }
+
     [DebuggerDisplay("url={url},inputXpath={inputXpath},submitXpath={submitXpath}")]
     internal abstract class BrowserAndDetails
     {
@@ -193,7 +280,7 @@ namespace allaiwinforms
 
                 JavascriptResponse response = await Browser.EvaluateScriptAsync(getButtonCoordinatesScript);
                 Dictionary<string, object> coordinates = response.Result as Dictionary<string, object>;
-                Console.WriteLine(response.Result);
+                Debug.WriteLine(response.Result);
                 if (response.Result is IDictionary<string, object> coordinate2)
                 {
                     double x = Convert.ToDouble(coordinate2["x"]);
@@ -210,7 +297,7 @@ namespace allaiwinforms
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Exception on ChatGpt click on submit:" + ex.Message + ex.StackTrace);
+                Debug.WriteLine("Exception on ChatGpt click on submit:" + ex.Message + ex.StackTrace);
             }
 
         }
