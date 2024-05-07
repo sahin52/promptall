@@ -61,6 +61,7 @@ namespace allaiwinforms
         /// </summary>
         private void InitializeComponent()
         {
+            this.Load += Form1_Load;
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
@@ -118,6 +119,14 @@ namespace allaiwinforms
                 }
             };
             this.Text = "Form1";
+            this.SizeChanged += Form1_SizeChanged;
+            firstRowSplitContainer.SizeChanged += Form1_SizeChanged;
+            firstRowSplitContainer.Panel1.SizeChanged += Form1_SizeChanged;
+            firstRowSplitContainer.Panel2.SizeChanged += Form1_SizeChanged;
+            secondRowSplitContainer.SizeChanged += Form1_SizeChanged;
+            secondRowSplitContainer.Panel1.SizeChanged += Form1_SizeChanged;
+            secondRowSplitContainer.Panel2.SizeChanged += Form1_SizeChanged;
+
             StartVsCode();
         }
         private async void OnSubmit(object sender, EventArgs e)
@@ -160,15 +169,23 @@ namespace allaiwinforms
             // Add a delay to give Visual Studio Code time to start up
             await Task.Delay(5000);
             Dictionary<IntPtr, string> newWindowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames();
-            IntPtr codeWindowHandle = newWindowHandlesWithNames
+            vscodeHandle = newWindowHandlesWithNames
                 .Where(kvp => kvp.Value == "Code" && !windowHandlesWithNames.ContainsKey(kvp.Key))
                 .Select(kvp => kvp.Key)
                 .FirstOrDefault();
 
             // Embed Visual Studio Code into the first panel of the first row
-            SetParent(codeWindowHandle, firstRowSplitContainer.Panel1.Handle);
-            MoveWindow(codeWindowHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
+            SetParent(vscodeHandle, firstRowSplitContainer.Panel1.Handle);
+            MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
 
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Maximized;
+        }
+        private void Form1_SizeChanged(object sender, EventArgs e)
+        {
+            MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
         }
         public void SendKeysToVSCode(string keys)
         {
