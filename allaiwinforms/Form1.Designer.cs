@@ -27,9 +27,7 @@ namespace allaiwinforms
         #region Windows Form Designer generated code
 
         private List<BrowserAndDetails> browserAndDetails = new List<BrowserAndDetails>(){
-            new GeminiBrowserAndDetails(),
             new ChatGptBrowserAndDetails(), 
-            //BrowserAndDetails("https://chat.openai.com", , "//*[@id='mySubmit']"),
             new BingChatBrowserAndDetails(),
             new ClaudeBrowserAndDetails(),
         };
@@ -41,8 +39,7 @@ namespace allaiwinforms
         [DllImport("user32.dll")]
         public static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
 
-        [DllImport("user32.dll")]
-        public static extern bool SetForegroundWindow(IntPtr hWnd);
+        
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
         private ChromiumWebBrowser CreateBrowser(string url)
@@ -92,9 +89,13 @@ namespace allaiwinforms
             // Create 4 ChromiumWebBrowser instances and add them to the SplitContainers
             var urls = browserAndDetails.Select(x => x.Url).ToList();
             // firstRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[0]));
+            StartVsCode().ContinueWith(res =>
+            {
+                browserAndDetails.Add(new VsCodeSubmitter(res.Result));
+            });
             firstRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[1]));
             secondRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[2]));
-            secondRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[3]));
+            secondRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[0]));
 
 
             inputLine = new TextBox
@@ -127,7 +128,6 @@ namespace allaiwinforms
             secondRowSplitContainer.Panel1.SizeChanged += Form1_SizeChanged;
             secondRowSplitContainer.Panel2.SizeChanged += Form1_SizeChanged;
 
-            StartVsCode();
         }
         private async void OnSubmit(object sender, EventArgs e)
         {
@@ -143,7 +143,6 @@ namespace allaiwinforms
 }                   // gemini:
                      getElementByXPath('//*[@id="app-root"]/main/side-navigation-v2/mat-sidenav-container/mat-sidenav-content/div/div[2]/chat-window/div[1]/div[2]/div[1]/input-area-v2/div/div/div[1]/div/div/rich-textarea/div[1]').focus()
                      */
-                    browserAndDetail.Browser.Focus();
                     try
                     {
                         await browserAndDetail.Submit(inputText);
@@ -153,21 +152,21 @@ namespace allaiwinforms
                         Debug.WriteLine("Exception: " + ex.Message + ex.StackTrace);
                     }
                 }
-                Properties.Settings.Default.PromptHistory.Add(inputText);
+                //Properties.Settings.Default.PromptHistory.Add(inputText);
                 inputLine.Clear();
             };
         }
 
         #endregion
 
-        public async Task StartVsCode()
+        private async Task<IntPtr> StartVsCode()
         {
             Dictionary<IntPtr, string> windowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames().ToDictionary(entry => entry.Key, entry => (string)entry.Value.Clone());
             await Task.Delay(1000);
             Process.Start(@"C:\Users\Sahin\AppData\Local\Programs\Microsoft VS Code\Code.exe");
 
             // Add a delay to give Visual Studio Code time to start up
-            await Task.Delay(5000);
+            await Task.Delay(2000);
             Dictionary<IntPtr, string> newWindowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames();
             vscodeHandle = newWindowHandlesWithNames
                 .Where(kvp => kvp.Value == "Code" && !windowHandlesWithNames.ContainsKey(kvp.Key))
@@ -177,6 +176,7 @@ namespace allaiwinforms
             // Embed Visual Studio Code into the first panel of the first row
             SetParent(vscodeHandle, firstRowSplitContainer.Panel1.Handle);
             MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
+            return vscodeHandle;
 
         }
         private void Form1_Load(object sender, EventArgs e)
@@ -186,14 +186,6 @@ namespace allaiwinforms
         private void Form1_SizeChanged(object sender, EventArgs e)
         {
             MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
-        }
-        public void SendKeysToVSCode(string keys)
-        {
-            // Activate the Visual Studio Code window
-            SetForegroundWindow(vscodeHandle);
-
-            // Send keys
-            SendKeys.SendWait(keys);
         }
     }
 
@@ -263,8 +255,7 @@ namespace allaiwinforms
 
         public override async Task Submit(string inputText)
         {
-            // Escape the input text for use in a JavaScript string
-
+            Browser.Focus();
             string enterInputScript = $@"
                             var input = document.evaluate('{InputXpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                             input.focus();
@@ -320,19 +311,33 @@ namespace allaiwinforms
         }
         
     }
-    internal class GeminiBrowserAndDetails : BrowserAndDetails
+    internal class VsCodeSubmitter : BrowserAndDetails
     {
+        [DllImport("user32.dll")]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        public GeminiBrowserAndDetails()
+        private nint handle;
+
+        public VsCodeSubmitter(IntPtr handle)
         {
-            Url = "https://gemini.google.com";
+            this.handle = handle;
+        }
+        private void SendKeysToVSCode(string keys)
+        {
+            // Activate the Visual Studio Code window
+            SetForegroundWindow(this.handle);
+
+            // Send keys
+            SendKeys.SendWait(keys);
+            SendKeys.SendWait("\n");
         }
 
         public override async Task Submit(string inputText)
         {
             // Escape the input text for use in a JavaScript string
             string escapedInputText = System.Security.SecurityElement.Escape(inputText);
-
+            SendKeysToVSCode(inputText);
+            // SendKeysToVSCode("\n");
 
 
         }
@@ -345,6 +350,7 @@ namespace allaiwinforms
         }
         public override async Task Submit(string inputText)
         {
+            Browser.Focus();
             var focusScript = @"document.querySelector('[contenteditable=""true""]').focus()";
             await Browser.EvaluateScriptAsync(focusScript);
 
@@ -374,6 +380,7 @@ namespace allaiwinforms
         }
         public override async Task Submit(string inputText)
         {
+            Browser.Focus();
             // Escape the input text for use in a JavaScript string
             string escapedInputText = System.Security.SecurityElement.Escape(inputText);
             string selectTextAreaScript = @"
