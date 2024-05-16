@@ -166,12 +166,16 @@ namespace allaiwinforms
             Process.Start(@"C:\Users\Sahin\AppData\Local\Programs\Microsoft VS Code\Code.exe");
 
             // Add a delay to give Visual Studio Code time to start up
-            await Task.Delay(2000);
-            Dictionary<IntPtr, string> newWindowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames();
-            vscodeHandle = newWindowHandlesWithNames
-                .Where(kvp => kvp.Value == "Code" && !windowHandlesWithNames.ContainsKey(kvp.Key))
-                .Select(kvp => kvp.Key)
-                .FirstOrDefault();
+            for (int i = 0; i < 100; i++)
+            {
+                await Task.Delay(100);
+                Dictionary<IntPtr, string> newWindowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames();
+                vscodeHandle = newWindowHandlesWithNames
+                    .Where(kvp => kvp.Value == "Code" && !windowHandlesWithNames.ContainsKey(kvp.Key))
+                    .Select(kvp => kvp.Key)
+                    .FirstOrDefault();
+                if (vscodeHandle != IntPtr.Zero) break;
+            }
 
             // Embed Visual Studio Code into the first panel of the first row
             SetParent(vscodeHandle, firstRowSplitContainer.Panel1.Handle);

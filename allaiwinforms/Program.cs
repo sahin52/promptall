@@ -16,6 +16,11 @@ namespace allaiwinforms
             ApplicationConfiguration.Initialize();
             var settings = new CefSettings();
             settings.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+            //settings.CachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\CEF";
+            //settings.RootCachePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\CEFUserDataPath";
+            //settings.PersistSessionCookies = true;
+            //// settings.UserDataPath
+            //settings.CefCommandLineArgs.Add("renderer-process-limit", "1");
             Cef.Initialize(new CefSettings());
             Application.Run(new Form1());
         }
