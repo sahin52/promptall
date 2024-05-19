@@ -69,7 +69,7 @@ namespace allaiwinforms
                 int lineWidth = TextRenderer.MeasureText(line, this.Font).Width;
 
                 // Calculate the number of lines needed for this line of text
-                int lineCount = Math.Max(1, (int)Math.Ceiling((double)lineWidth / this.Width));
+                int lineCount = Math.Max(1, (int)Math.Ceiling((double)lineWidth / (this.Width - 42)));
 
                 // Add the number of lines to the total
                 totalLines += lineCount;
@@ -155,6 +155,7 @@ namespace allaiwinforms
             inputLine.TextChanged += TextBox_TextChanged;
             this.Text = "Form1";
             this.SizeChanged += Form1_SizeChanged;
+            this.SizeChanged += TextBox_TextChanged;
             firstRowSplitContainer.SizeChanged += Form1_SizeChanged;
             firstRowSplitContainer.Panel1.SizeChanged += Form1_SizeChanged;
             firstRowSplitContainer.Panel2.SizeChanged += Form1_SizeChanged;
