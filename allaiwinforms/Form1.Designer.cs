@@ -56,16 +56,28 @@ namespace allaiwinforms
         }
         private void TextBox_TextChanged(object sender, EventArgs e)
         {
-            AdjustTextBoxHeight();
-        }
-
-        private void AdjustTextBoxHeight()
-        {
-            int textWidth = TextRenderer.MeasureText(inputLine.Text, this.Font).Width;
-            int lines = (int)Math.Ceiling((double)textWidth / this.Width);
+            #region Adjust the height of the input line
             int lineHeight = this.Font.Height;
+            int totalLines = 0;
+
+            // Split the text into lines
+            string[] lines = inputLine.Text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+            foreach (string line in lines)
+            {
+                // Calculate the width of the line
+                int lineWidth = TextRenderer.MeasureText(line, this.Font).Width;
+
+                // Calculate the number of lines needed for this line of text
+                int lineCount = Math.Max(1, (int)Math.Ceiling((double)lineWidth / this.Width));
+
+                // Add the number of lines to the total
+                totalLines += lineCount;
+            }
+
             // Adjust height to ensure all text is visible
-            inputLine.Height = Math.Max(20, lines * lineHeight + Padding.Top + Padding.Bottom) + 5; // Add some padding for better appearance
+            inputLine.Height = Math.Min(200, Math.Max(20, totalLines * lineHeight + Padding.Top + Padding.Bottom)) + 5; // Add some padding for better appearance
+            #endregion
         }
         /// <summary>
         ///  Required method for Designer support - do not modify
@@ -120,6 +132,8 @@ namespace allaiwinforms
             {
                 Dock = DockStyle.Top,
                 Multiline = true,
+                ScrollBars = ScrollBars.Vertical,
+                Height = 25
             };
             this.Controls.Add(inputLine);
 
@@ -217,7 +231,7 @@ namespace allaiwinforms
         }
         private void Form1_SizeChanged(object sender, EventArgs e)
         {
-            if(vscodeHandle != IntPtr.Zero)
+            if (vscodeHandle != IntPtr.Zero)
                 MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
         }
     }
