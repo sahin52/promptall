@@ -38,6 +38,7 @@ namespace allaiwinforms
         private IntPtr vscodeHandle;
         private SplitContainer firstRowSplitContainer;
         private SplitContainer secondRowSplitContainer;
+        private SplitContainer rowSplitContainer;
 
         [DllImport("user32.dll")]
         public static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
@@ -92,7 +93,7 @@ namespace allaiwinforms
 
 
             // Create a SplitContainer for the rows
-            var rowSplitContainer = new SplitContainer
+            rowSplitContainer = new SplitContainer
             {
                 Dock = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
@@ -122,6 +123,24 @@ namespace allaiwinforms
             {
                 if (res.Result != IntPtr.Zero)
                     browserAndDetails.Add(new VsCodeSubmitter(res.Result));
+                else
+                {
+                    if (this.rowSplitContainer.InvokeRequired)
+                    {
+                        this.rowSplitContainer.Invoke(new MethodInvoker(delegate
+                        {
+                            this.rowSplitContainer.SplitterDistance = rowSplitContainer.Width / 3;
+                            firstRowSplitContainer.SplitterDistance = 0;
+                            //secondRowSplitContainer.SplitterDistance = secondRowSplitContainer.Width / 2;
+                        }));
+                    }
+                    else
+                    {
+                        this.rowSplitContainer.SplitterDistance = rowSplitContainer.Width / 3;
+                        firstRowSplitContainer.SplitterDistance = 0;
+                        //secondRowSplitContainer.SplitterDistance = secondRowSplitContainer.Width / 2;
+                    }
+                }
             });
             firstRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[1]));
             secondRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[2]));
