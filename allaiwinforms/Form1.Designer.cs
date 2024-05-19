@@ -178,7 +178,7 @@ namespace allaiwinforms
                 }
             };
             inputLine.TextChanged += TextBox_TextChanged;
-            this.Text = "Form1";
+            this.Text = "PromptAll - Interact With Different AI's Simultaneously 🌟🤖🚀";
             this.SizeChanged += Form1_SizeChanged;
             this.SizeChanged += TextBox_TextChanged;
             firstRowSplitContainer.SizeChanged += Form1_SizeChanged;
