@@ -144,7 +144,7 @@ namespace allaiwinforms
             submitButton.Click += OnSubmit;
             inputLine.KeyDown += (sender, e) =>
             {
-                if (e.KeyCode == Keys.Enter)
+                if (e.KeyCode == Keys.Enter && !e.Shift)
                 {
                     // Handle Enter key press here
                     e.Handled = true;
