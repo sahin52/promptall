@@ -2,6 +2,7 @@
 using CefSharp.WinForms;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using static System.Net.Mime.MediaTypeNames;
 namespace allaiwinforms
 {
     partial class Form1
@@ -27,7 +28,7 @@ namespace allaiwinforms
         #region Windows Form Designer generated code
 
         private List<BrowserAndDetails> browserAndDetails = new List<BrowserAndDetails>(){
-            new ChatGptBrowserAndDetails(), 
+            new ChatGptBrowserAndDetails(),
             new BingChatBrowserAndDetails(),
             new ClaudeBrowserAndDetails(),
         };
@@ -39,7 +40,7 @@ namespace allaiwinforms
         [DllImport("user32.dll")]
         public static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
 
-        
+
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
         private ChromiumWebBrowser CreateBrowser(string url)
@@ -51,7 +52,19 @@ namespace allaiwinforms
             browserAndDetails.FirstOrDefault(u => u.Url == url).Browser = browser;
             return browser;
         }
+        private void TextBox_TextChanged(object sender, EventArgs e)
+        {
+            AdjustTextBoxHeight();
+        }
 
+        private void AdjustTextBoxHeight()
+        {
+            int textWidth = TextRenderer.MeasureText(inputLine.Text, this.Font).Width;
+            int lines = (int)Math.Ceiling((double)textWidth / this.Width);
+            int lineHeight = this.Font.Height;
+            // Adjust height to ensure all text is visible
+            inputLine.Height = Math.Max(20, lines * lineHeight + Padding.Top + Padding.Bottom) + 5; // Add some padding for better appearance
+        }
         /// <summary>
         ///  Required method for Designer support - do not modify
         ///  the contents of this method with the code editor.
@@ -100,7 +113,8 @@ namespace allaiwinforms
 
             inputLine = new TextBox
             {
-                Dock = DockStyle.Top
+                Dock = DockStyle.Top,
+                Multiline = true,
             };
             this.Controls.Add(inputLine);
 
@@ -119,6 +133,7 @@ namespace allaiwinforms
                     OnSubmit(null, null);
                 }
             };
+            inputLine.TextChanged += TextBox_TextChanged;
             this.Text = "Form1";
             this.SizeChanged += Form1_SizeChanged;
             firstRowSplitContainer.SizeChanged += Form1_SizeChanged;
