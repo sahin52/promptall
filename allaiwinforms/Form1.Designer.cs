@@ -83,30 +83,33 @@ namespace allaiwinforms
             var rowSplitContainer = new SplitContainer
             {
                 Dock = DockStyle.Fill,
-                Orientation = Orientation.Vertical
+                Orientation = Orientation.Vertical,
             };
             this.Controls.Add(rowSplitContainer);
+            rowSplitContainer.SplitterDistance = rowSplitContainer.Width / 2;
 
             // Create a SplitContainer for the first row's columns
             firstRowSplitContainer = new SplitContainer
             {
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
             };
             rowSplitContainer.Panel1.Controls.Add(firstRowSplitContainer);
+            firstRowSplitContainer.SplitterDistance = firstRowSplitContainer.Width / 2;
 
             // Create a SplitContainer for the second row's columns
             secondRowSplitContainer = new SplitContainer
             {
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
             };
             rowSplitContainer.Panel2.Controls.Add(secondRowSplitContainer);
-
+            secondRowSplitContainer.SplitterDistance = secondRowSplitContainer.Width / 2;
             // Create 4 ChromiumWebBrowser instances and add them to the SplitContainers
             var urls = browserAndDetails.Select(x => x.Url).ToList();
             // firstRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[0]));
             StartVsCode().ContinueWith(res =>
             {
-                browserAndDetails.Add(new VsCodeSubmitter(res.Result));
+                if (res.Result != IntPtr.Zero)
+                    browserAndDetails.Add(new VsCodeSubmitter(res.Result));
             });
             firstRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[1]));
             secondRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[2]));
@@ -178,26 +181,34 @@ namespace allaiwinforms
 
         private async Task<IntPtr> StartVsCode()
         {
-            Dictionary<IntPtr, string> windowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames().ToDictionary(entry => entry.Key, entry => (string)entry.Value.Clone());
-            await Task.Delay(1000);
-            Process.Start(@"C:\Users\Sahin\AppData\Local\Programs\Microsoft VS Code\Code.exe");
-
-            // Add a delay to give Visual Studio Code time to start up
-            for (int i = 0; i < 100; i++)
+            try
             {
-                await Task.Delay(100);
-                Dictionary<IntPtr, string> newWindowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames();
-                vscodeHandle = newWindowHandlesWithNames
-                    .Where(kvp => kvp.Value == "Code" && !windowHandlesWithNames.ContainsKey(kvp.Key))
-                    .Select(kvp => kvp.Key)
-                    .FirstOrDefault();
-                if (vscodeHandle != IntPtr.Zero) break;
-            }
+                Dictionary<IntPtr, string> windowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames().ToDictionary(entry => entry.Key, entry => (string)entry.Value.Clone());
+                await Task.Delay(1000);
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string vscodePath = Path.Combine(localAppData, @"Programs\Microsoft VS Code\Code.exe");
+                Process.Start(vscodePath);
+                // Add a delay to give Visual Studio Code time to start up
+                for (int i = 0; i < 100; i++)
+                {
+                    await Task.Delay(100);
+                    Dictionary<IntPtr, string> newWindowHandlesWithNames = WindowHandleGetter.GetWindowHandlesWithProcessNames();
+                    vscodeHandle = newWindowHandlesWithNames
+                        .Where(kvp => kvp.Value == "Code" && !windowHandlesWithNames.ContainsKey(kvp.Key))
+                        .Select(kvp => kvp.Key)
+                        .FirstOrDefault();
+                    if (vscodeHandle != IntPtr.Zero) break;
+                }
 
-            // Embed Visual Studio Code into the first panel of the first row
-            SetParent(vscodeHandle, firstRowSplitContainer.Panel1.Handle);
-            MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
-            return vscodeHandle;
+                // Embed Visual Studio Code into the first panel of the first row
+                SetParent(vscodeHandle, firstRowSplitContainer.Panel1.Handle);
+                MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
+                return vscodeHandle;
+            }
+            catch (Exception ex)
+            {
+                return IntPtr.Zero;
+            }
 
         }
         private void Form1_Load(object sender, EventArgs e)
@@ -206,7 +217,8 @@ namespace allaiwinforms
         }
         private void Form1_SizeChanged(object sender, EventArgs e)
         {
-            MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
+            if(vscodeHandle != IntPtr.Zero)
+                MoveWindow(vscodeHandle, 0, 0, firstRowSplitContainer.Panel1.Width, firstRowSplitContainer.Panel1.Height, true);
         }
     }
 
@@ -345,6 +357,8 @@ namespace allaiwinforms
         }
         private void SendKeysToVSCode(string keys)
         {
+            if (this.vsCodeHandle == IntPtr.Zero)
+                return;
             // Activate the Visual Studio Code window
             SetForegroundWindow(this.vsCodeHandle);
 
