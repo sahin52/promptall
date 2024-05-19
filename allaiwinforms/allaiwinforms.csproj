@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="CefSharp.WinForms.NETCore" Version="123.0.60" />
+    <PackageReference Include="InputSimulator" Version="1.0.4" />
   </ItemGroup>
 
   <ItemGroup>

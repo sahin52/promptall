@@ -2,6 +2,8 @@
 using CefSharp.WinForms;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using WindowsInput.Native;
+using WindowsInput;
 using static System.Net.Mime.MediaTypeNames;
 namespace allaiwinforms
 {
@@ -81,7 +83,7 @@ namespace allaiwinforms
             var rowSplitContainer = new SplitContainer
             {
                 Dock = DockStyle.Fill,
-                Orientation = Orientation.Horizontal
+                Orientation = Orientation.Vertical
             };
             this.Controls.Add(rowSplitContainer);
 
@@ -328,26 +330,26 @@ namespace allaiwinforms
             }
 
         }
-        
+
     }
     internal class VsCodeSubmitter : BrowserAndDetails
     {
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        private nint handle;
+        private nint vsCodeHandle;
 
         public VsCodeSubmitter(IntPtr handle)
         {
-            this.handle = handle;
+            this.vsCodeHandle = handle;
         }
         private void SendKeysToVSCode(string keys)
         {
             // Activate the Visual Studio Code window
-            SetForegroundWindow(this.handle);
+            SetForegroundWindow(this.vsCodeHandle);
 
-            // Send keys
-            SendKeys.SendWait(keys);
+            var inputSimulator = new InputSimulator();
+            inputSimulator.Keyboard.TextEntry(keys);
             SendKeys.SendWait("\n");
         }
 
