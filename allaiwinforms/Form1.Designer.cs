@@ -126,8 +126,19 @@ namespace allaiwinforms
             firstRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[1]));
             secondRowSplitContainer.Panel1.Controls.Add(CreateBrowser(urls[2]));
             secondRowSplitContainer.Panel2.Controls.Add(CreateBrowser(urls[0]));
-
-
+            
+            // Create a Button for the submit action
+            var submitButton = new Button { 
+                Text = "Submit", 
+                Dock = DockStyle.Top,
+                BackColor = Color.LightBlue, // Change the background color
+                ForeColor = Color.DarkBlue, // Change the text color
+                FlatStyle = FlatStyle.Flat, // Change the style to flat
+                Cursor = Cursors.Hand, // Change the cursor to a hand when it's over the button
+            };
+            this.Controls.Add(submitButton);
+            // Handle the Click event of the submit button
+            submitButton.Click += OnSubmit;
             inputLine = new TextBox
             {
                 Dock = DockStyle.Top,
@@ -136,12 +147,7 @@ namespace allaiwinforms
                 Height = 25
             };
             this.Controls.Add(inputLine);
-
-            // Create a Button for the submit action
-            var submitButton = new Button { Text = "Submit", Dock = DockStyle.Top };
-            this.Controls.Add(submitButton);
-            // Handle the Click event of the submit button
-            submitButton.Click += OnSubmit;
+            
             inputLine.KeyDown += (sender, e) =>
             {
                 if (e.KeyCode == Keys.Enter && !e.Shift)
