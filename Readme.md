@@ -15,8 +15,9 @@ You can send prompts to websites - Bing Copilot, ChatGPT, Claude.ai, and the VSC
 
 ## Known Issues
 - Currently, the application requires you to log in again after closing and reopening it.
+- No way to select which AI programs to open, currently it opens all of them.
 - If you don't have GitHub Copilot installed, the application still attempts to open Visual Studio Code.
-- No way to select which AI programs to open, currently it opens all of them
+- You need to open Github Copilot extension yourself.
 
 ## License
 This project is licensed under the MIT License. You are free to use, modify, and distribute the code for both commercial and non-commercial purposes, as long as you include the original license file in your distribution.
