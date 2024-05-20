@@ -254,6 +254,8 @@ namespace allaiwinforms
         private void Form1_Load(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Maximized;
+            var donationForm = new DonateDialog();
+            donationForm.ShowDialog();
         }
         private void Form1_SizeChanged(object sender, EventArgs e)
         {
@@ -482,4 +484,5 @@ namespace allaiwinforms
         }
 
     }
+
 }
