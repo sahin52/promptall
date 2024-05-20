@@ -315,7 +315,6 @@ namespace allaiwinforms
         public ChromiumWebBrowser Browser { get; set; }
         public string Url { get; protected set; }
         public string InputXpath { get; protected set; } = "";
-        public string SubmitXpath { get; protected set; } = "";
 
         public abstract Task Submit(string inputText);
     }
@@ -329,12 +328,6 @@ namespace allaiwinforms
         public override async Task Submit(string inputText)
         {
             Browser.Focus();
-            string enterInputScript = $@"
-                            var input = document.evaluate('{InputXpath}', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                            input.focus();
-                            // input.dispatchEvent(event);
-                        ";
-            await Browser.EvaluateScriptAsync(enterInputScript);
             foreach (char c in inputText)
             {
                 var keyEvent = new KeyEvent
@@ -440,10 +433,13 @@ namespace allaiwinforms
 
                 Browser.GetBrowser().GetHost().SendKeyEvent(keyEvent);
             }
-
-            var clickOnSubmitScript = @"document.querySelector('[aria-label=""Send Message""]').click()";
-
-            await Browser.EvaluateScriptAsync(clickOnSubmitScript);
+            var clickOnSubmitScript = @"document.querySelector('[data-value=""new chat""]').click()";
+            var res = await Browser.EvaluateScriptAsync(clickOnSubmitScript);
+            if (!res.Success) // new chat button does not exist
+            {
+                clickOnSubmitScript = @"document.querySelector('[aria-label=""Send Message""]').click()";
+                res = await Browser.EvaluateScriptAsync(clickOnSubmitScript);
+            }
 
         }
     }
