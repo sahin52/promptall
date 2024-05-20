@@ -18,14 +18,29 @@ namespace allaiwinforms
 
             this.Text = "Donation";
             this.Size = new Size(300, 200);
-                this.StartPosition = FormStartPosition.CenterScreen; // Add this line
+            this.StartPosition = FormStartPosition.CenterScreen; // Add this line
 
 
-            var label = new Label { Text = "PromptAll is free, and always will be.  Thanks to the support of generous donors like you, we can continue to offer our services free of charge.  Would you consider making a donation today?", Dock = DockStyle.Top };
-            this.Controls.Add(label);
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            var flowLayoutPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
+            };
+            this.Controls.Add(flowLayoutPanel);
+
+            var label = new Label
+            {
+                Text = "PromptAll is free, and always will be. Thanks to the support of generous donors like you, we can continue to offer our services free of charge. Would you consider making a donation today?",
+                AutoSize = true
+            };
+            flowLayoutPanel.Controls.Add(label);
 
             var donateButton = new Button { Text = "Support Us🎉", Dock = DockStyle.Bottom };
-            donateButton.Click += (sender, e) => 
+            donateButton.Click += (sender, e) =>
             {
                 var psi = new System.Diagnostics.ProcessStartInfo
                 {
@@ -34,7 +49,7 @@ namespace allaiwinforms
                 };
                 System.Diagnostics.Process.Start(psi);
                 this.Close();
-            };   
+            };
             this.Controls.Add(donateButton);
 
             var cancelButton = new Button { Text = "Cancel", Dock = DockStyle.Bottom };
